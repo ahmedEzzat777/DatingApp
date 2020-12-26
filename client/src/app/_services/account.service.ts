@@ -16,11 +16,10 @@ export class AccountService {
 
   login(model: any) {
     return this.http.post(this.baseUrl + 'account/login', model).pipe(
-      map(response => {
-        const user : User= response as User;
+      map(user => {
         if(user){
           localStorage.setItem('user', JSON.stringify(user));
-          this.currentUserSource.next(user);
+          this.currentUserSource.next(<User>user);
         }
         return user;
       })
