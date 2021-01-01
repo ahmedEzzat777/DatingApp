@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Data
@@ -14,8 +16,10 @@ namespace API.Data
     {
         private readonly DataContext _context;
         private readonly IMapper _mapper;
-        public UserRepository(DataContext context, IMapper mapper)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public UserRepository(DataContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
+            _httpContextAccessor = httpContextAccessor;
             _mapper = mapper;
             _context = context;
 
@@ -62,15 +66,26 @@ namespace API.Data
                 .ToListAsync();
         }
 
-        public async Task<bool> SaveAllAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
-        }
+        // public async Task<bool> SaveAllAsync()
+        // {
+        //     return await _context.SaveChangesAsync() > 0;
+        // }
 
-        public void Update(AppUser user)
+        // public void Update(AppUser user)
+        // {
+        //     _context.Entry(user).State = EntityState.Modified;
+        //     //_context.Update(user);
+        // }
+
+        public async Task<bool> UpdateMemberAsync(MemberUpdateDto memberUpdateDto)
         {
-            _context.Entry(user).State = EntityState.Modified;
-            //_context.Update(user);
+            var username = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = await GetUserByUserNameAsync(username);
+
+            _mapper.Map(memberUpdateDto, user);
+            _context.Update(user);
+
+            return await _context.SaveChangesAsync() > 0;
         }
     }
 }
