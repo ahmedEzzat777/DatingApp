@@ -35,7 +35,8 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
+            "name": "Launch Chrome with ng serve",
+            "preLaunchTask": "npm: start",
             "url": "https://localhost:4200",
             "webRoot": "${workspaceFolder}/client"
         }
