@@ -5,6 +5,7 @@ using API.DTOs;
 using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -24,7 +25,7 @@ namespace API.Controllers
             return Ok(await _userRepository.GetMembersAsync());
         }
 
-        [HttpGet("{username}")]
+        [HttpGet("{username}", Name = "GetUser")]
         public async Task<ActionResult<MemberDto>> GetUser(string username)
         {
             return await _userRepository.GetMemberByUserNameAsync(username);
@@ -47,5 +48,31 @@ namespace API.Controllers
             return BadRequest("Failed to update user.");
             */
         }
+
+        [HttpPost("add-photo")]
+        public async Task<ActionResult<PhotoDto>> AddPhoto(IFormFile file)
+        {
+            var result = await _userRepository.AddPhoto(file);
+
+            if(result is null)
+                return BadRequest();
+
+            return CreatedAtRoute("GetUser", new {username = GetClaimedUserName()}, result);
+            //return CreatedAtRoute("GetUser", result);
+        }
+
+        [HttpPut("set-main-photo/{photoId}")]
+        public async Task<ActionResult> SetMainPhoto(int photoId)
+        {
+            return await _userRepository.SetMainPhotoAsync(photoId)? NoContent(): BadRequest("Failed to set main photo.");
+        }
+
+        [HttpDelete("delete-photo/{photoId}")]
+        public async Task<ActionResult> DeletePhoto(int photoId)
+        {
+            return await _userRepository.DeletePhoto(photoId)? Ok(): BadRequest("Failed to delete photo.");
+        }
+
+        private string GetClaimedUserName() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 }

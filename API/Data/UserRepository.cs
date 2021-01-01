@@ -17,12 +17,58 @@ namespace API.Data
         private readonly DataContext _context;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public UserRepository(DataContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor)
+        private readonly IPhotoService _photoService;
+        public UserRepository(DataContext context, IMapper mapper, IHttpContextAccessor httpContextAccessor, IPhotoService photoService)
         {
+            _photoService = photoService;
             _httpContextAccessor = httpContextAccessor;
             _mapper = mapper;
             _context = context;
+        }
 
+        public async Task<PhotoDto> AddPhoto(IFormFile formFile)
+        {
+            var user = await GetUserByUserNameAsync(GetClaimedUserName());
+
+            var result = await _photoService.AddPhotoAsync(formFile);
+
+            if(result.Error is not null)
+                return null;
+
+            var photo = new Photo
+            {
+                Url = result.SecureUrl.AbsoluteUri,
+                PublicId = result.PublicId,
+                AppUserId = user.Id
+            };
+
+            if(user.Photos.Count == 0)
+                photo.IsMain = true;
+
+            user.Photos.Add(photo);
+            await _context.SaveChangesAsync();
+            
+            return _mapper.Map<PhotoDto>(photo);
+        }
+
+        public async Task<bool> DeletePhoto(int photoId)
+        {
+            var user = await GetUserByUserNameAsync(GetClaimedUserName());
+            var photo = user.Photos.FirstOrDefault(p => p.Id == photoId);
+
+            if(photo is null) return false;
+            if(photo.IsMain) return false;
+
+            if(photo.PublicId is not null)
+            {
+                var result = await _photoService.DeletePhotoAsync(photo.PublicId);
+
+                if(result.Error is not null) return false;
+            }
+
+            user.Photos.Remove(photo);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<MemberDto> GetMemberByIdAsync(int id)
@@ -66,6 +112,23 @@ namespace API.Data
                 .ToListAsync();
         }
 
+        public async Task<bool> SetMainPhotoAsync(int photoId)
+        {
+            var user = await GetUserByUserNameAsync(GetClaimedUserName());
+            var photo = user.Photos.FirstOrDefault(p => p.Id == photoId);
+
+            if(photo.IsMain) return false;
+
+            var currentMain = user.Photos.FirstOrDefault(p => p.IsMain);
+
+            if(currentMain is not null) currentMain.IsMain = false;
+
+            photo.IsMain = true;
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
         // public async Task<bool> SaveAllAsync()
         // {
         //     return await _context.SaveChangesAsync() > 0;
@@ -79,13 +142,17 @@ namespace API.Data
 
         public async Task<bool> UpdateMemberAsync(MemberUpdateDto memberUpdateDto)
         {
-            var username = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var user = await GetUserByUserNameAsync(username);
+            var user = await GetUserByUserNameAsync(GetClaimedUserName());
 
             _mapper.Map(memberUpdateDto, user);
             _context.Update(user);
 
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        private string GetClaimedUserName()
+        {
+            return _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
     }
 }
