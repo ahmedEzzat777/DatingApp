@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using API.Attributes;
 
 namespace API.DTOs
 {
@@ -15,6 +16,7 @@ namespace API.DTOs
         public string Gender { get; set; }
 
         [Required]
+        [MinimumAge(18)]
         public DateTime DateOfBirth { get; set; }
 
         [Required]
