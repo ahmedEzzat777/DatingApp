@@ -8,14 +8,14 @@
             <input type="radio" value='female' formControlName='gender' class='ml-3'> Female
         </label>
     </div>
-    <app-text-input [formControl]='registerForm.controls["username"] | cast' [label]='"Username"'></app-text-input>
-    <app-text-input [formControl]='registerForm.controls["knownAs"] | cast' [label]='"Known As"'></app-text-input>
-    <app-date-input [formControl]='registerForm.controls["dateOfBirth"] | cast' [label]='"Date Of Birth"' [maxDate]='maxDate'></app-date-input>
-    <app-text-input [formControl]='registerForm.controls["city"] | cast' [label]='"City"'></app-text-input>
-    <app-text-input [formControl]='registerForm.controls["country"] | cast' [label]='"Country"'></app-text-input>
+    <app-text-input [formControl]='registerForm.controls["username"]' [label]='"Username"'></app-text-input>
+    <app-text-input [formControl]='registerForm.controls["knownAs"]' [label]='"Known As"'></app-text-input>
+    <app-date-input [formControl]='registerForm.controls["dateOfBirth"]' [label]='"Date Of Birth"' [maxDate]='maxDate'></app-date-input>
+    <app-text-input [formControl]='registerForm.controls["city"]' [label]='"City"'></app-text-input>
+    <app-text-input [formControl]='registerForm.controls["country"]' [label]='"Country"'></app-text-input>
 
-    <app-text-input [formControl]='registerForm.controls["password"] | cast' [label]='"Password"' [type]='"password"'></app-text-input>
-    <app-text-input [formControl]='registerForm.controls["confirmPassword"] | cast' [label]='"Confirm Password"' [type]='"password"'></app-text-input>
+    <app-text-input [formControl]='registerForm.controls["password"]' [label]='"Password"' [type]='"password"'></app-text-input>
+    <app-text-input [formControl]='registerForm.controls["confirmPassword"]' [label]='"Confirm Password"' [type]='"password"'></app-text-input>
 
     <div class="row" *ngIf="validationErrors.length > 0">
         <ul class="text-danger">

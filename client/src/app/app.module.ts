@@ -24,7 +24,6 @@ import { LoadingInterceptor } from './_interceptors/loading.interceptor';
 import { PhotoEditorComponent } from './members/photo-editor/photo-editor.component';
 import { TextInputComponent } from './_forms/text-input/text-input.component';
 import { DateInputComponent } from './_forms/date-input/date-input.component';
-import { CastPipe } from './_pipes/cast.pipe';
 
 @NgModule({
   declarations: [
@@ -43,8 +42,7 @@ import { CastPipe } from './_pipes/cast.pipe';
     MemberEditComponent,
     PhotoEditorComponent,
     TextInputComponent,
-    DateInputComponent,
-    CastPipe
+    DateInputComponent
   ],
   imports: [
     BrowserModule,
