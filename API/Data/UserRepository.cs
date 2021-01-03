@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
+using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -14,6 +17,8 @@ namespace API.Data
 {
     public class UserRepository : IUserRepository
     {
+        private const string Male = "male";
+        private const string Female = "female";
         private readonly DataContext _context;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -86,11 +91,26 @@ namespace API.Data
                 .SingleOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<MemberDto>> GetMembersAsync()
+        public async Task<PagedList<MemberDto>> GetMembersAsync(UserParams userParams)
         {
-            return await _context.Users
+            var user = await GetUserByUserNameAsync(GetClaimedUserName());
+            userParams.CurrentUserName = user.UserName;
+
+            if(string.IsNullOrEmpty(userParams.Gender))
+                userParams.Gender = (user.Gender.ToLower() == Male) ? Female : Male;
+
+            var minDob = DateTime.Today.AddYears(-userParams.MaxAge - 1);
+            var maxDob = DateTime.Today.AddYears(-userParams.MinAge);
+
+            var query = _context.Users
+                .Where(u => u.UserName != userParams.CurrentUserName 
+                    && u.Gender == userParams.Gender
+                    && u.DateOfBirth >= minDob
+                    && u.DateOfBirth <= maxDob)
                 .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
-                .ToListAsync();
+                .AsNoTracking();
+
+            return await PagedList<MemberDto>.CreateAsync(query, userParams.PageNumber, userParams.PageSize);
         }
 
         public async Task<AppUser> GetUserByIdAsync(int id)
