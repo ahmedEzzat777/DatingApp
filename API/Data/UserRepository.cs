@@ -107,6 +107,7 @@ namespace API.Data
                     && u.Gender == userParams.Gender
                     && u.DateOfBirth >= minDob
                     && u.DateOfBirth <= maxDob)
+                .OrderByDescending(u => userParams.OrderBy == "created" ? u.Created : u.LastActive)
                 .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
                 .AsNoTracking();
 
@@ -149,10 +150,10 @@ namespace API.Data
             return true;
         }
 
-        // public async Task<bool> SaveAllAsync()
-        // {
-        //     return await _context.SaveChangesAsync() > 0;
-        // }
+        public async Task<bool> SaveAllAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
 
         // public void Update(AppUser user)
         // {
@@ -172,7 +173,7 @@ namespace API.Data
 
         private string GetClaimedUserName()
         {
-            return _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
         }
     }
 }

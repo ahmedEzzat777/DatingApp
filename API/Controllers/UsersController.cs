@@ -62,7 +62,7 @@ namespace API.Controllers
             if(result is null)
                 return BadRequest();
 
-            return CreatedAtRoute("GetUser", new {username = GetClaimedUserName()}, result);
+            return CreatedAtRoute("GetUser", new {username = User.GetUserName()}, result);
             //return CreatedAtRoute("GetUser", result);
         }
 
@@ -77,7 +77,5 @@ namespace API.Controllers
         {
             return await _userRepository.DeletePhoto(photoId)? Ok(): BadRequest("Failed to delete photo.");
         }
-
-        private string GetClaimedUserName() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 }
