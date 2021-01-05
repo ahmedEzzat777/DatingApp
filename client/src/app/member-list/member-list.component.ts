@@ -1,11 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
-import { take } from 'rxjs/operators';
 import { Member } from '../_models/member';
 import { Pagination } from '../_models/Pagination';
 import { User } from '../_models/User';
 import { UserParams } from '../_models/UserParams';
-import { AccountService } from '../_services/account.service';
 import { MembersService } from '../_services/members.service';
 
 @Component({

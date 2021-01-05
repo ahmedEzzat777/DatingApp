@@ -9,13 +9,9 @@ namespace API.Extensions
         private const string Pagination = "Pagination";
         private const string AccessControlExposeHeaders = "Access-Control-Expose-Headers";
 
-        public static void AddPaginationHeader(this HttpResponse response,
-                                                       int currentPage,
-                                                       int itemsPerPage,
-                                                       int totalItems,
-                                                       int totalPages)
+        public static void AddPaginationHeader(this HttpResponse response, PaginationProperties paginationProperties)
         {
-            var paginationHeader = new PaginationHeader(currentPage, itemsPerPage, totalItems, totalPages);
+            var paginationHeader = new PaginationHeader(paginationProperties);
 
             var JsonOptions = new JsonSerializerOptions
             {

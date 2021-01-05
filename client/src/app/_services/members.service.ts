@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -19,7 +20,13 @@ export class MembersService {
   user: User;
   userParams: UserParams;
 
-  constructor(private http: HttpClient, private accountService: AccountService) { 
+  constructor(private http: HttpClient, private accountService: AccountService, private router: Router) { 
+    this.refresh();
+  }
+
+  refresh(){
+    this.memberCache.clear();
+    this.members.clear();
     this.accountService.currentUser$.pipe(take(1)).subscribe(user => {
       this.user = user;
       this.userParams = new UserParams(user);
@@ -37,6 +44,19 @@ export class MembersService {
   resetUserParams() {
     this.userParams = new UserParams(this.user);
     return this.userParams;
+  }
+
+  addLike(username: string)
+  {
+    return this.http.post(this.baseUrl +'likes/'+username, {});
+  }
+
+  getLikes(predicate: string, pageNumber: number, pageSize: number){
+    const params = this.getPaginationHeaders(pageNumber, pageSize)
+                       .append('predicate', predicate);
+
+
+    return this.getPaginatedResult<Partial<Member[]>>(this.baseUrl + 'likes', params);
   }
 
   getMembers(userParams: UserParams){

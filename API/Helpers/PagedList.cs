@@ -13,6 +13,14 @@ namespace API.Helpers
         public int PageSize { get; private set; }
         public int TotalCount { get; private set; }
 
+        public PaginationProperties PaginationProperties => new PaginationProperties
+        {
+            CurrentPage = this.CurrentPage,
+            TotalPages = this.TotalPages,
+            PageSize = this.PageSize,
+            TotalCount = this.TotalCount
+        };
+
         public PagedList(IEnumerable<T> items, int count, int pageNumber, int pageSize)
         {
             CurrentPage = pageNumber;

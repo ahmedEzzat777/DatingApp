@@ -26,7 +26,7 @@ namespace API.Controllers
         {
             var result = await _userRepository.GetMembersAsync(userParams);
 
-            Response.AddPaginationHeader(result.CurrentPage, result.PageSize, result.TotalCount, result.TotalPages);
+            Response.AddPaginationHeader(result.PaginationProperties);
             return Ok(result);
         }
 

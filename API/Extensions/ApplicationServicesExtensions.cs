@@ -19,6 +19,7 @@ namespace API.Extensions
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<LogUserActivity>();
             services.AddAutoMapper(typeof(AutoMapperProfiles).Assembly);
+            services.AddScoped<ILikesRepository, LikesRepository>();
 
             services.AddDbContext<DataContext>(options =>
             {
