@@ -8,25 +8,14 @@ namespace API.Helpers
 {
     public class PagedList<T>: List<T>
     {
-        public int CurrentPage { get; private set; }
-        public int TotalPages { get; private set; }
-        public int PageSize { get; private set; }
-        public int TotalCount { get; private set; }
-
-        public PaginationProperties PaginationProperties => new PaginationProperties
-        {
-            CurrentPage = this.CurrentPage,
-            TotalPages = this.TotalPages,
-            PageSize = this.PageSize,
-            TotalCount = this.TotalCount
-        };
+        public PaginationProperties PaginationProperties {get; private set;} = new PaginationProperties();
 
         public PagedList(IEnumerable<T> items, int count, int pageNumber, int pageSize)
         {
-            CurrentPage = pageNumber;
-            TotalPages = (int)Math.Ceiling(count/(double)pageSize);
-            PageSize = pageSize;
-            TotalCount = count;
+            PaginationProperties.CurrentPage = pageNumber;
+            PaginationProperties.TotalPages = (int)Math.Ceiling(count/(double)pageSize);
+            PaginationProperties.PageSize = pageSize;
+            PaginationProperties.TotalCount = count;
             AddRange(items);
         }
 
