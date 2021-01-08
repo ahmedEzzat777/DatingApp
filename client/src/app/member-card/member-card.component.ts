@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
-import { Member } from '../_models/member';
+import { Member } from '../_models/Member';
 import { MembersService } from '../_services/members.service';
 
 @Component({
