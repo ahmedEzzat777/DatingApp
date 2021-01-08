@@ -96,6 +96,9 @@ namespace API.Data
             var user = await GetUserByUserNameAsync(GetClaimedUserName());
             userParams.CurrentUserName = user.UserName;
 
+            if(user.Gender is null)
+                user.Gender = Male;
+
             if(string.IsNullOrEmpty(userParams.Gender))
                 userParams.Gender = (user.Gender.ToLower() == Male) ? Female : Male;
 
