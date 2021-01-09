@@ -14,7 +14,7 @@ namespace API.Attributes
         }
         public override bool IsValid(object value)
         {
-            return (DateTime)value <= DateTime.Now.AddYears(-_minAge);
+            return (DateTime)value <= DateTime.UtcNow.AddYears(-_minAge);
         }
     }
 }
