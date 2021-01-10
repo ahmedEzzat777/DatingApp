@@ -51,8 +51,7 @@ namespace API.Data
                 photo.IsMain = true;
 
             user.Photos.Add(photo);
-            await _context.SaveChangesAsync();
-            
+
             return _mapper.Map<PhotoDto>(photo);
         }
 
@@ -72,7 +71,6 @@ namespace API.Data
             }
 
             user.Photos.Remove(photo);
-            await _context.SaveChangesAsync();
             return true;
         }
 
@@ -86,32 +84,32 @@ namespace API.Data
         public async Task<MemberDto> GetMemberByUserNameAsync(string username)
         {
             return await _context.Users
-                .Where(u => u.UserName == username)
                 .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
+                .Where(u => u.Username == username)
                 .SingleOrDefaultAsync();
         }
 
         public async Task<PagedList<MemberDto>> GetMembersAsync(UserParams userParams)
         {
-            var user = await GetUserByUserNameAsync(GetClaimedUserName());
-            userParams.CurrentUserName = user.UserName;
+            userParams.CurrentUserName = GetClaimedUserName();
+            var userGender = await GetUserGender(userParams.CurrentUserName);
 
-            if(user.Gender is null)
-                user.Gender = Male;
+            if(userGender is null)
+                userGender = Male;
 
             if(string.IsNullOrEmpty(userParams.Gender))
-                userParams.Gender = (user.Gender.ToLower() == Male) ? Female : Male;
+                userParams.Gender = (userGender.ToLower() == Male) ? Female : Male;
 
             var minDob = DateTime.Today.AddYears(-userParams.MaxAge - 1);
             var maxDob = DateTime.Today.AddYears(-userParams.MinAge);
 
             var query = _context.Users
-                .Where(u => u.UserName != userParams.CurrentUserName 
+                .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
+                .Where(u => u.Username != userParams.CurrentUserName 
                     && u.Gender == userParams.Gender
                     && u.DateOfBirth >= minDob
                     && u.DateOfBirth <= maxDob)
                 .OrderByDescending(u => userParams.OrderBy == "created" ? u.Created : u.LastActive)
-                .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
                 .AsNoTracking();
 
             return await PagedList<MemberDto>.CreateAsync(query, userParams.PageNumber, userParams.PageSize);
@@ -127,6 +125,14 @@ namespace API.Data
             return await _context.Users
                 .Include(u => u.Photos)
                 .SingleOrDefaultAsync(user => user.UserName == username);
+        }
+
+        public async Task<string> GetUserGender(string username)
+        {
+            return await _context.Users
+                .Where(u => u.UserName == username)
+                .Select(u => u.Gender)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<AppUser>> GetUsersAsync()
@@ -148,14 +154,8 @@ namespace API.Data
             if(currentMain is not null) currentMain.IsMain = false;
 
             photo.IsMain = true;
-            await _context.SaveChangesAsync();
-
+            
             return true;
-        }
-
-        public async Task<bool> SaveAllAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
         }
 
         // public void Update(AppUser user)
@@ -164,14 +164,12 @@ namespace API.Data
         //     //_context.Update(user);
         // }
 
-        public async Task<bool> UpdateMemberAsync(MemberUpdateDto memberUpdateDto)
+        public async Task UpdateMember(MemberUpdateDto memberUpdateDto)
         {
             var user = await GetUserByUserNameAsync(GetClaimedUserName());
 
             _mapper.Map(memberUpdateDto, user);
             _context.Update(user);
-
-            return await _context.SaveChangesAsync() > 0;
         }
 
         private string GetClaimedUserName()
