@@ -89,11 +89,12 @@ namespace API.Data
         public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername)
         {
             var messages = await _context.Messages
+                .Include(m => m.Sender).ThenInclude(p => p.Photos)
+                .Include(m => m.Recipient).ThenInclude(p => p.Photos)
                 .Where(m => 
                     m.Recipient.UserName == currentUsername && m.Sender.UserName == recipientUsername && m.RecipientDeleted == false
                     || m.Recipient.UserName == recipientUsername && m.Sender.UserName == currentUsername && m.SenderDeleted == false)
                 .OrderBy(m => m.MessageSent)
-                .ProjectTo<MessageDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
 
             var unreadMessages = messages.Where(m => m.DateRead is null && m.RecipientUsername == currentUsername);
@@ -104,7 +105,7 @@ namespace API.Data
                     message.DateRead = DateTime.UtcNow;
             }
             
-            return messages;
+            return _mapper.Map<IEnumerable<MessageDto>>(messages);
         }
 
         public void RemoveConnection(Connection connection)
