@@ -21,5 +21,7 @@ namespace API.Interfaces
         Task<bool> SetMainPhotoAsync(int photoId);
         Task<bool> DeletePhoto(int photoId);
         Task<string> GetUserGender(string username);
+        Task<IEnumerable<UnmoderatedPhotoDto>> GetUnmoderatedPhotos();
+        Task<bool> SetModerated(int photoId);
     }
 }

@@ -4,6 +4,7 @@ using API.Interfaces;
 using API.Services;
 using API.SignalR;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +21,10 @@ namespace API.Extensions
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<LogUserActivity>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddAutoMapper(typeof(AutoMapperProfiles).Assembly);
+
+            var serviceProvider = services.BuildServiceProvider();
+            var httpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
+            services.AddAutoMapper(/*typeof(AutoMapperProfiles).Assembly,*/ c=> c.AddProfile(new AutoMapperProfiles(httpContextAccessor)));
 
 
             services.AddDbContext<DataContext>(options =>

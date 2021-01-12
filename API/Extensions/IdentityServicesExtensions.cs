@@ -61,8 +61,6 @@ namespace API.Extensions
                 opt.AddPolicy("ModeratePhotoRole", policy => policy.RequireRole("Admin", "Moderator"));
             });
 
-            services.AddHttpContextAccessor();
-
             return services;
         }
     }

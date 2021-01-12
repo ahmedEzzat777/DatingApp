@@ -47,8 +47,8 @@ namespace API.Data
                 AppUserId = user.Id
             };
 
-            if(user.Photos.Count == 0)
-                photo.IsMain = true;
+            // if(user.Photos.Count == 0)
+            //     photo.IsMain = true;
 
             user.Photos.Add(photo);
 
@@ -115,6 +115,17 @@ namespace API.Data
             return await PagedList<MemberDto>.CreateAsync(query, userParams.PageNumber, userParams.PageSize);
         }
 
+        public async Task<IEnumerable<UnmoderatedPhotoDto>> GetUnmoderatedPhotos()
+        {
+            return await _context.Users
+                .Include(u => u.Photos)
+                .SelectMany(u => u.Photos)
+                .Where(p => !p.IsModerated)
+                .ProjectTo<UnmoderatedPhotoDto>(_mapper.ConfigurationProvider)
+                .OrderBy(p => p.UserName)
+                .ToListAsync();
+        }
+
         public async Task<AppUser> GetUserByIdAsync(int id)
         {
             return await _context.Users.FindAsync(id);
@@ -123,7 +134,7 @@ namespace API.Data
         public async Task<AppUser> GetUserByUserNameAsync(string username)
         {
             return await _context.Users
-                .Include(u => u.Photos)
+                .Include(u => u.Photos.Where(p => p.IsModerated || u.UserName == GetClaimedUserName()))
                 .SingleOrDefaultAsync(user => user.UserName == username);
         }
 
@@ -138,7 +149,7 @@ namespace API.Data
         public async Task<IEnumerable<AppUser>> GetUsersAsync()
         {
             return await _context.Users
-                .Include(u => u.Photos)
+                .Include(u => u.Photos.Where(p => p.IsModerated || u.UserName == GetClaimedUserName()))
                 .ToListAsync();
         }
 
@@ -147,6 +158,7 @@ namespace API.Data
             var user = await GetUserByUserNameAsync(GetClaimedUserName());
             var photo = user.Photos.FirstOrDefault(p => p.Id == photoId);
 
+            if(photo is null) return false;
             if(photo.IsMain) return false;
 
             var currentMain = user.Photos.FirstOrDefault(p => p.IsMain);
@@ -155,6 +167,34 @@ namespace API.Data
 
             photo.IsMain = true;
             
+            return true;
+        }
+
+        public async Task<bool> SetModerated(int photoId)
+        {
+            var photo =  await _context.Users
+                .Include(u => u.Photos)
+                .SelectMany(u => u.Photos)
+                .Where(p => !p.IsModerated)
+                .SingleOrDefaultAsync(p => p.Id == photoId);
+
+
+            if(photo is null) return false;
+
+            photo.IsModerated = true;
+
+            var userId = photo.AppUserId;
+            
+            var numberOfModeratedPhotos 
+                =await  _context.Users
+                    .Where(u => u.Id == userId)
+                    .Include(u => u.Photos)
+                    .SelectMany(u => u.Photos)
+                    .Where(p => p.IsModerated)
+                    .CountAsync();
+
+            if(numberOfModeratedPhotos == 1) photo.IsMain = true;
+
             return true;
         }
 
