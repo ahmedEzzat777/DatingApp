@@ -74,6 +74,29 @@ namespace API.Data
             return true;
         }
 
+        public async Task<bool> DeleteUnmoderatedPhoto(int photoId)
+        {
+            var user = await _context.Users
+                .Include(u => u.Photos)
+                .FirstOrDefaultAsync(p => p.Photos.Any(p => p.Id == photoId));
+
+            var photo = user.Photos.FirstOrDefault(p => p.Id == photoId);
+                
+            if(photo is null) return false;
+            if(photo.IsMain) return false;
+
+            if(photo.PublicId is not null)
+            {
+                var result = await _photoService.DeletePhotoAsync(photo.PublicId);
+
+                if(result.Error is not null) return false;
+            }
+
+            user.Photos.Remove(photo);
+
+            return true;
+        }
+
         public async Task<MemberDto> GetMemberByIdAsync(int id)
         {
             return await _context.Users
@@ -83,10 +106,18 @@ namespace API.Data
 
         public async Task<MemberDto> GetMemberByUserNameAsync(string username)
         {
-            return await _context.Users
+            var member = await _context.Users
                 .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
                 .Where(u => u.Username == username)
                 .SingleOrDefaultAsync();
+
+            if(username == GetClaimedUserName())
+            {
+                foreach (var photoDto in await GetUmoderatedPhotosForCallingUser())
+                    member.Photos.Add(photoDto);
+            }
+
+            return member;
         }
 
         public async Task<PagedList<MemberDto>> GetMembersAsync(UserParams userParams)
@@ -134,7 +165,7 @@ namespace API.Data
         public async Task<AppUser> GetUserByUserNameAsync(string username)
         {
             return await _context.Users
-                .Include(u => u.Photos.Where(p => p.IsModerated || u.UserName == GetClaimedUserName()))
+                .Include(u => u.Photos)
                 .SingleOrDefaultAsync(user => user.UserName == username);
         }
 
@@ -149,7 +180,7 @@ namespace API.Data
         public async Task<IEnumerable<AppUser>> GetUsersAsync()
         {
             return await _context.Users
-                .Include(u => u.Photos.Where(p => p.IsModerated || u.UserName == GetClaimedUserName()))
+                .Include(u => u.Photos)
                 .ToListAsync();
         }
 
@@ -159,7 +190,7 @@ namespace API.Data
             var photo = user.Photos.FirstOrDefault(p => p.Id == photoId);
 
             if(photo is null) return false;
-            if(photo.IsMain) return false;
+            if(photo.IsMain || !photo.IsModerated) return false;
 
             var currentMain = user.Photos.FirstOrDefault(p => p.IsMain);
 
@@ -185,15 +216,14 @@ namespace API.Data
 
             var userId = photo.AppUserId;
             
-            var numberOfModeratedPhotos 
-                =await  _context.Users
+            var numberOfModeratedPhotos = await  _context.Users
                     .Where(u => u.Id == userId)
                     .Include(u => u.Photos)
                     .SelectMany(u => u.Photos)
                     .Where(p => p.IsModerated)
                     .CountAsync();
 
-            if(numberOfModeratedPhotos == 1) photo.IsMain = true;
+            if(numberOfModeratedPhotos == 0) photo.IsMain = true;
 
             return true;
         }
@@ -211,10 +241,20 @@ namespace API.Data
             _mapper.Map(memberUpdateDto, user);
             _context.Update(user);
         }
+        private async Task<IEnumerable<PhotoDto>> GetUmoderatedPhotosForCallingUser()
+        {
+            return await _context.Users
+                .Where(u => u.UserName == GetClaimedUserName())
+                .SelectMany(u => u.Photos)
+                .Where(p => !p.IsModerated)
+                .ProjectTo<PhotoDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+        }
 
         private string GetClaimedUserName()
         {
             return _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
         }
+
     }
 }

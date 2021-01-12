@@ -79,7 +79,7 @@ namespace API.Controllers
             switch (action)
             {
                 case 0: //delete photo
-                    result = await _unitOfWork.UserRepository.DeletePhoto(photoId);
+                    result = await _unitOfWork.UserRepository.DeleteUnmoderatedPhoto(photoId);
                     break;
                 case 1: //moderated
                     result = await _unitOfWork.UserRepository.SetModerated(photoId);

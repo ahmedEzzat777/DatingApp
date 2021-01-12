@@ -1,1 +1,18 @@
-<p>photo-management works!</p>
+<div class="row">
+    <div class="col-3 d-flex" *ngFor="let photo of photos">
+        <div class="card" >
+            <div class="card-header">
+                {{photo.userName}}
+            </div>
+            <div class="card-body">
+                <img src="{{photo.url}}" alt="{{photo.userName}}" style="max-width: 120px;max-height: 120px;">
+            </div>
+            <div class="card-footer">
+                <div class="d-flex">
+                    <button (click)="allowPhoto(photo.id)" class="btn btn-primary">Allow</button>
+                    <button (click)="deletePhoto(photo.id)" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+        </div>        
+    </div>
+</div>

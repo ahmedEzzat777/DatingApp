@@ -23,5 +23,6 @@ namespace API.Interfaces
         Task<string> GetUserGender(string username);
         Task<IEnumerable<UnmoderatedPhotoDto>> GetUnmoderatedPhotos();
         Task<bool> SetModerated(int photoId);
+        Task<bool> DeleteUnmoderatedPhoto(int photoId);
     }
 }
