@@ -32,7 +32,7 @@ namespace API
             }
             catch(Exception e)
             {
-                var logger = services.GetRequiredService<ILogger>();
+                var logger = services.GetRequiredService<ILogger<Program>>();
                 logger.LogError(e, "An error occurred during migrations");
             }
 
