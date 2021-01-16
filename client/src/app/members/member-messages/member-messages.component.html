@@ -3,7 +3,11 @@
         class="card-body"
         #scrollMe
         style="overflow: scroll; height: 535px;"
-        [scrollTop]='scrollMe.scrollHeight'>
+        infinite-scroll
+        [infiniteScrollThrottle]="300"
+        (scrolledUp)="onScroll()" 
+        [scrollWindow]="false"
+        >
         <div *ngIf="(messageService.messageThread$ | async)?.length === 0">
             No Messages yet... say hi by using the message box below.
         </div>

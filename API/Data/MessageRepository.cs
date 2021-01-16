@@ -86,26 +86,27 @@ namespace API.Data
             return await PagedList<MessageDto>.CreateAsync(query, messageParams.PageNumber, messageParams.PageSize);
         }
 
-        public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername)
+        public async Task<PagedList<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername, int pageNumber, int pageSize)
         {
-            var messages = await _context.Messages
+            var messages = _context.Messages
                 .Include(m => m.Sender).ThenInclude(p => p.Photos)
                 .Include(m => m.Recipient).ThenInclude(p => p.Photos)
                 .Where(m => 
                     m.Recipient.UserName == currentUsername && m.Sender.UserName == recipientUsername && m.RecipientDeleted == false
                     || m.Recipient.UserName == recipientUsername && m.Sender.UserName == currentUsername && m.SenderDeleted == false)
-                .OrderBy(m => m.MessageSent)
-                .ToListAsync();
+                .OrderBy(m => m.MessageSent);
 
-            var unreadMessages = messages.Where(m => m.DateRead is null && m.RecipientUsername == currentUsername);
+            var unreadMessages = messages.Where(m => m.DateRead == null && m.RecipientUsername == currentUsername);
 
-            if(unreadMessages.Any())
+            if(await unreadMessages.AnyAsync())
             {
-                foreach(var message in unreadMessages)
+                foreach(var message in await unreadMessages.ToListAsync())
                     message.DateRead = DateTime.UtcNow;
             }
             
-            return _mapper.Map<IEnumerable<MessageDto>>(messages);
+            var query = messages.ProjectTo<MessageDto>(_mapper.ConfigurationProvider);
+            
+            return await PagedList<MessageDto>.CreateFromBottomAsync(query, pageNumber, pageSize);
         }
 
         public void RemoveConnection(Connection connection)

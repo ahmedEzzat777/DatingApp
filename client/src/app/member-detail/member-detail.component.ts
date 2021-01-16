@@ -21,8 +21,10 @@ export class MemberDetailComponent implements OnInit,OnDestroy {
   galleryOptions: NgxGalleryOptions[];
   galleryImages: NgxGalleryImage[];
   activeTab: TabDirective;
-  messages: Message[] = [];
+  //messages: Message[] = [];
   user: User;
+  pageNumber = 1;
+  pageSize = 6;
 
   constructor(public presence: PresenceService, private route: ActivatedRoute, private messageService: MessageService, private accountService: AccountService, private router: Router) { 
     this.accountService.currentUser$.pipe(take(1)).subscribe(user => {
@@ -69,11 +71,11 @@ export class MemberDetailComponent implements OnInit,OnDestroy {
     return imageUrls
   }
 
-  loadMessages() {
-    this.messageService.getMessageThread(this.member.username).subscribe(messages => {
-      this.messages = messages;
-    });
-  }
+  // loadMessages() {
+  //   this.messageService.getMessageThread(this.member.username).subscribe(messages => {
+  //     this.messages = messages;
+  //   });
+  // }
 
   selectTab(tabId: number) {
     this.memberTabs.tabs[tabId].active = true;
@@ -81,8 +83,8 @@ export class MemberDetailComponent implements OnInit,OnDestroy {
 
   onTabActivated(data: TabDirective) {
     this.activeTab = data;
-    if(this.activeTab.heading === 'Messages' && this.messages.length === 0) {
-      this.messageService.createHubConnection(this.user, this.member.username);
+    if(this.activeTab.heading === 'Messages') {
+      this.messageService.createHubConnection(this.user, this.member.username, this.pageNumber, this.pageSize);
     } else {
       this.messageService.stopHubConnection();
     }

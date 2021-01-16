@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.DTOs;
@@ -28,6 +29,8 @@ namespace API.SignalR
         {
             var httpContext = Context.GetHttpContext();
             var otherUser = httpContext.Request.Query["user"].ToString();
+            var pageNumber = int.Parse(httpContext.Request.Query["pageNumber"].ToString());
+            var pageSize = int.Parse(httpContext.Request.Query["pageSize"].ToString());
             var groupName = GetGroupName(Context.User.GetUserName(), otherUser);
 
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
@@ -35,12 +38,28 @@ namespace API.SignalR
             await Clients.Group(groupName).SendAsync("UpdatedGroup", group);
 
             var messages = await _unitOfWork.MessageRepository
-                .GetMessageThread(Context.User.GetUserName(), otherUser);
+                .GetMessageThread(Context.User.GetUserName(), otherUser, pageNumber, pageSize);
 
             if(_unitOfWork.HasChanges())
                 await _unitOfWork.Complete();
 
             await Clients.Caller.SendAsync("RecieveMessageThread", messages);
+        }
+
+        public async Task<IEnumerable<MessageDto>> GetMessageThread(GetMessageThreadDto getMessageThreadDto)
+        {
+            var httpContext = Context.GetHttpContext();
+            var otherUser = getMessageThreadDto.RecipientUsername;
+            var pageNumber = getMessageThreadDto.pageNumber;
+            var pageSize = getMessageThreadDto.PageSize;
+
+            var messages = await _unitOfWork.MessageRepository
+                .GetMessageThread(Context.User.GetUserName(), otherUser, pageNumber, pageSize);
+
+            if(_unitOfWork.HasChanges())
+                await _unitOfWork.Complete();
+
+            return messages.ToList();
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)

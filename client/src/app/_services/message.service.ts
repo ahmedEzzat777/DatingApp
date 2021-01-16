@@ -19,13 +19,14 @@ export class MessageService {
   private hubConnection: HubConnection;
   private messageThreadSource = new BehaviorSubject<Message[]>([]);
   messageThread$ = this.messageThreadSource.asObservable();
+  availablePages:number[] = [];
 
   constructor(private http: HttpClient, private busyService: BusyService) { }
 
-  createHubConnection(user: User, otherUsername: string) {
+  createHubConnection(user: User, otherUsername: string, pageNumber: number, pageSize: number) {
     this.busyService.busy();
     this.hubConnection = new HubConnectionBuilder()
-      .withUrl(this.hubUrl + 'message?user=' + otherUsername, {
+      .withUrl(this.hubUrl + 'message?user=' + otherUsername + '&pageNumber=' + pageNumber + '&pageSize=' + pageSize, {
         accessTokenFactory: () => user.token
       })
       .withAutomaticReconnect()
@@ -38,6 +39,7 @@ export class MessageService {
 
       this.hubConnection.on('RecieveMessageThread', (messages: Message[]) => {
         this.messageThreadSource.next(messages);
+        this.availablePages.push(1);
       });
 
       this.hubConnection.on('NewMessage', (message: Message) => {
@@ -67,6 +69,7 @@ export class MessageService {
   stopHubConnection() {
     if(this.hubConnection) {
       this.messageThreadSource.next([]);
+      this.availablePages = [];
       this.hubConnection
         .stop()
         .catch(error => console.log(error));;
@@ -79,14 +82,36 @@ export class MessageService {
     return getPaginatedResult<Message[]>(this.baseUrl + 'messages', params, this.http);
   }
 
-  getMessageThread(username: string) {
-    return this.http.get<Message[]>(this.baseUrl + 'messages/thread/' + username);
-  }
+  // getMessageThread(username: string) {
+  //   return this.http.get<Message[]>(this.baseUrl + 'messages/thread/' + username);
+  // }
 
   async sendMessage(username: string, content: string) {
     return this.hubConnection.invoke('SendMessage', { //same name as function in message hub
       recipientUsername: username,
       content
+    })
+    .catch(error => console.log(error));
+  }
+
+  async getMessageThread(recipientUsername: string, pageNumber: number, pageSize: number) {
+    if(this.availablePages.includes(pageNumber)) return;
+
+    return this.hubConnection.invoke<Message[]>('GetMessageThread', {
+      recipientUsername,
+      pageNumber,
+      pageSize
+    })
+    .then((receivedMessages: Message[]) => {
+      if(receivedMessages){
+        let newMessages: Message[];
+  
+        this.messageThread$.pipe(take(1)).subscribe(messages => {
+          newMessages = [...receivedMessages, ...messages];
+          this.messageThreadSource.next(newMessages);
+          this.availablePages.push(pageNumber);
+        });
+      }
     })
     .catch(error => console.log(error));
   }

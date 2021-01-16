@@ -11,6 +11,7 @@ import { PaginationModule } from 'ngx-bootstrap/pagination';
 import { ButtonsModule } from 'ngx-bootstrap/buttons';
 import { TimeagoModule } from 'ngx-timeago';
 import { ModalModule } from 'ngx-bootstrap/modal';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 
 @NgModule({
@@ -29,7 +30,8 @@ import { ModalModule } from 'ngx-bootstrap/modal';
     PaginationModule.forRoot(),
     ButtonsModule.forRoot(),
     TimeagoModule.forRoot(),
-    ModalModule.forRoot()
+    ModalModule.forRoot(),
+    InfiniteScrollModule
   ],
   exports: [
     BsDropdownModule,
@@ -42,7 +44,8 @@ import { ModalModule } from 'ngx-bootstrap/modal';
     PaginationModule,
     ButtonsModule,
     TimeagoModule,
-    ModalModule
+    ModalModule,
+    InfiniteScrollModule
   ]
 })
 export class SharedModule { }

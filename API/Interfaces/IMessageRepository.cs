@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
@@ -17,6 +16,6 @@ namespace API.Interfaces
         void DeleteMessage(Message message);
         Task<Message> GetMessage(int id);
         Task<PagedList<MessageDto>> GetMessagesForUser(MessageParams messageParams);
-        Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername);
+        Task<PagedList<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername, int pageNumber = 1, int pageSize = 6);
     }
 }
